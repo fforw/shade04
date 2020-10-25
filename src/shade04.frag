@@ -4,8 +4,8 @@ precision lowp float;
 uniform float u_time;
 uniform vec2 u_resolution;
 uniform vec4 u_mouse;
-uniform vec3 u_palette[6];
-uniform float u_shiny[6];
+uniform vec3 u_palette[7];
+uniform float u_shiny[7];
 
 const float pi = 3.141592653589793;
 const float tau = pi * 2.0;
@@ -227,9 +227,20 @@ float sdBoundingBox(vec3 p, vec3 b, float e)
     length(max(vec3(q.x, q.y, p.z), 0.0))+min(max(q.x, max(q.y, p.z)), 0.0));
 }
 
+float sdHexPrism( vec3 p, vec2 h )
+{
+    const vec3 k = vec3(-0.8660254, 0.5, 0.57735);
+    p = abs(p);
+    p.xy -= 2.0*min(dot(k.xy, p.xy), 0.0)*k.xy;
+    vec2 d = vec2(
+    length(p.xy-vec2(clamp(p.x,-k.z*h.x,k.z*h.x), h.x))*sign(p.y-h.x),
+    p.z-h.y );
+    return min(max(d.x,d.y),0.0) + length(max(d,0.0));
+}
+
 float shape(float v, float x)
 {
-    return x > 0.1 ? -abs(v) : abs(v);
+    return x > 0.0 ? -abs(v) : abs(v);
 }
 
 const mat2 frontPlaneRot = ROT(0.05235987755982988);
@@ -241,6 +252,7 @@ const mat2 fourShear = SHEARX(-0.20943951023931953);
 vec2 getDistance(vec3 p) {
 
     float t = u_time;
+
 
     // ground plane
     //float pd = p.y + 2.0;
@@ -346,15 +358,16 @@ vec2 getDistance(vec3 p) {
     //result = opUnion(result, pd, 4.0);
     result = opUnion(result, sphere, 1.0);
 
-
     vec3 shaftPos = p;
 
     shaftPos.yz *= rotate90;
 
-    vec3 noisePos = p - vec3(0,0, - u_time * 10.0);
+    float zOffset = - u_time * 10.0;
+
+    vec3 noisePos = p - vec3(0,0, zOffset);
 
     float n = snoise(noisePos);
-    float shaft = -sdBeam( shaftPos + shape(n,p.x) * 0.25 , vec3(0,0,2.5) ) * 0.6;
+    float shaft = -sdBeam( shaftPos + shape(n,p.x) * 0.25 , vec3(0,0,3) ) * 0.6;
 
 
     float bottom = dot(p + vec3(0,2.2,0), vec3(0,1,0) );
@@ -362,6 +375,35 @@ vec2 getDistance(vec3 p) {
 
     result = opUnion(result, bottom, 3.0);
     result = opUnion(result, shaft, n < 0.4 ? 4.0 : 5.0);
+
+
+    vec3 supportPos = p;
+    supportPos.x = abs(supportPos.x);
+    supportPos.x -= 2.5;
+    supportPos.z -= zOffset;
+
+    float c = 20.0;
+    supportPos.z = mod(supportPos.z+0.5*c,c)-0.5*c;
+
+    supportPos.yz *= rotate90;
+
+
+    float support = sdHexPrism(supportPos, vec2(0.4, 10));
+
+
+
+    float support2 = sdHexPrism(p - vec3(0,2.5,0), vec2(0.4, 20));
+
+    vec3 support3Pos = p;
+    support3Pos.z -= zOffset;
+    support3Pos.z = mod(support3Pos.z+0.5*c,c)-0.5*c;
+    support3Pos.xz *= rotate90;
+
+    float support3 = sdHexPrism(support3Pos - vec3(0,2.5,0), vec2(0.4, 20));
+
+    result = opUnion(result, support, 6.0);
+    result = opUnion(result, support2, 6.0);
+    result = opUnion(result, support3, 6.0);
 
 
 // DEBUG

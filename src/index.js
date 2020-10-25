@@ -202,7 +202,8 @@ window.onload = () => {
             "#c02",
             "#00244f",
             "#004d9d",
-            "#010101"
+            "#010101",
+            "#4c3a25"
         ],
         1
     );
@@ -212,12 +213,13 @@ window.onload = () => {
 
     gl.uniform3fv(u_palette, paletteArray);
     gl.uniform1fv(u_shiny, new Float32Array([
-        0.01,
+        2,
           1000,
-        0.01,
         2,
         2,
-        0.01,
+        2,
+        2,
+        2
     ]));
 
     requestAnimationFrame(main)
