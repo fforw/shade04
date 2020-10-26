@@ -1,11 +1,12 @@
 // noinspection ES6UnusedImports
 import STYLE from "./style.css"
+import perfNow from "performance-now"
 
 import vertexShaderSource from "./shade04.vert"
 import fragmentShaderSource from "./shade04.frag"
 import Color from "./Color";
 
-console.log(fragmentShaderSource)
+//console.log(fragmentShaderSource)
 
 const PHI = (1 + Math.sqrt(5)) / 2;
 const TAU = Math.PI * 2;
@@ -96,6 +97,7 @@ function printError(msg)
 
 function main(time)
 {
+    const start = perfNow();
     const f = mouseDown ? 1 : -1;
 
     // update uniforms
@@ -105,7 +107,6 @@ function main(time)
 
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
-
     // draw
     const primitiveType = gl.TRIANGLES;
     const offset = 0;
@@ -203,18 +204,18 @@ window.onload = () => {
             "#00244f",
             "#004d9d",
             "#010101",
-            "#4c3a25"
+            "#4c3a25",
+            "#f0f"
         ],
         1
     );
-
-    console.log("PALETTE", paletteArray);
 
 
     gl.uniform3fv(u_palette, paletteArray);
     gl.uniform1fv(u_shiny, new Float32Array([
         2,
-          1000,
+        1000,
+        2,
         2,
         2,
         2,

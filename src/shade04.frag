@@ -4,8 +4,8 @@ precision lowp float;
 uniform float u_time;
 uniform vec2 u_resolution;
 uniform vec4 u_mouse;
-uniform vec3 u_palette[7];
-uniform float u_shiny[7];
+uniform vec3 u_palette[8];
+uniform float u_shiny[8];
 
 const float pi = 3.141592653589793;
 const float tau = pi * 2.0;
@@ -16,7 +16,7 @@ out vec4 outColor;
 
 
 #define MAX_STEPS 100
-#define MAX_DIST 50.
+#define MAX_DIST 100.
 #define SURF_DIST .001
 
 #define ROT(a) mat2(cos(a), -sin(a), sin(a), cos(a))
@@ -257,124 +257,135 @@ vec2 getDistance(vec3 p) {
     // ground plane
     //float pd = p.y + 2.0;
 
-
     vec2 result = vec2(1e6, 0);
-
-    vec3 cutoutPos = p;
-
-    cutoutPos.yz *= rotate90;
-
-    float cutout = sdCappedCylinder(cutoutPos, 1.89, 1.0);
-
-    float gCutout = sdCappedCylinder(cutoutPos, 1.78, 1.0);
-
-    float gGapCutout = dBox(cutoutPos - vec3(1.36,0, 0.36), vec3(1,1,0.36));
-
-    float gInnerCutout = sdRoundBox(cutoutPos - vec3(-0.2,0,0), vec3(0.42,1,1.12), 0.45);
-
-    float flattenedSideCutout = dot(p - vec3(-0.98,0,0), vec3(-1,0,0) );
-
-    float gFlapCutout = dBox(cutoutPos - vec3(0.62 + 0.35,0, -0.35), vec3(0.5,1,0.35));
-
-    float round = 0.4;
-
-    // Letter S
-
-    float sCutout = sdRoundBox(cutoutPos - vec3(-0.2,0,0.5), vec3(0.44 - round, 1.0- round, 0.8-round), round);
-
-
-    round = 0.2;
-
-    vec3 s2Pos = cutoutPos- vec3( 0.21,0,0.56);
-
-
-    s2Pos.xz *= sCutRot;
-
-    float s2Cutout = sdRoundBox(s2Pos , vec3(0.51 - round, 1.1 - round, 0.18-round), round);
-    sCutout = max(-s2Cutout, sCutout);
-
-    s2Pos = cutoutPos- vec3( -0.6,0,0.36);
-    s2Pos.xz *= sCutRot;
-
-    float s3Cutout = sdRoundBox(s2Pos , vec3(0.51 - round, 1.1 - round, 0.18-round), round);
-    sCutout = max(-s3Cutout, sCutout);
-
-    float sSerif = dBox(cutoutPos - vec3(0.2,0, 1.02), vec3(0.05,1,0.24));
-    sCutout = min(sSerif, sCutout);
-
-    sSerif = dBox(cutoutPos - vec3(-0.66,0, 0.03), vec3(0.05,1,0.24));
-    sCutout = min(sSerif, sCutout);
-
-    // Zero
-
-
-    vec3 elongation = vec3(0,1,0.32);
-
-    vec3 zCutoutPos = cutoutPos- vec3(-0.47,0,-0.95);
-
-    vec3 q = zCutoutPos - clamp( zCutoutPos, -elongation, elongation );
-
-    float zeroCutout = sdTorus(q , vec2(0.155, 0.07));
-
-
-    // four
-
-    vec3 fourShBoxPos = p;
-    fourShBoxPos.yx *= fourShear;
-    float fourShBox = dBox(fourShBoxPos - vec3(.14,-0.8,0), vec3(0.1,0.38,1));
-
-
-    float fourHBox = dBox(p - vec3(.14,-1.08,0), vec3(0.28,0.1,1));
-
-    float fourVBox = dBox(p - vec3(.25,-1.15,0), vec3(0.1, 0.3,1));
-
-    gInnerCutout = max(flattenedSideCutout, gInnerCutout);
-    gInnerCutout = max(-gFlapCutout, gInnerCutout);
-    gInnerCutout = max(-sCutout, gInnerCutout);
-    gInnerCutout = max(-zeroCutout, gInnerCutout);
-    gInnerCutout = max(-fourShBox, gInnerCutout);
-    gInnerCutout = max(-fourHBox, gInnerCutout);
-    gInnerCutout = max(-fourVBox, gInnerCutout);
-
-    gCutout = max(-gGapCutout, gCutout);
-    gCutout = max(-gInnerCutout, gCutout);
-    cutout = max(-gCutout, cutout);
-
     float sphere = sdSphere( p , 1.8 );
 
-    vec3 frontPlane = vec3(0,0,-1);
-    frontPlane.yz *= frontPlaneRot;
+    float d2 = length(p);
+    if (d2 < 2.0)
+    {
+        vec3 cutoutPos = p;
 
-    vec3 backPlane = vec3(0,0,1);
-    backPlane.yz *= backPlaneRot;
+        cutoutPos.yz *= rotate90;
 
-    float front = dot(p + vec3(0,0,.25), frontPlane );
-    float back = dot(p - vec3(0,0,.25), backPlane)  ;
+        float cutout = sdCappedCylinder(cutoutPos, 1.89, 1.0);
 
-    sphere = max(sphere, front);
-    sphere = max(sphere, back) - 0.2;
-    sphere = max(-cutout, sphere);
+        float gCutout = sdCappedCylinder(cutoutPos, 1.78, 1.0);
+
+        float gGapCutout = dBox(cutoutPos - vec3(1.36,0, 0.36), vec3(1,1,0.36));
+
+        float gInnerCutout = sdRoundBox(cutoutPos - vec3(-0.2,0,0), vec3(0.42,1,1.12), 0.45);
+
+        float flattenedSideCutout = dot(p - vec3(-0.98,0,0), vec3(-1,0,0) );
+
+        float gFlapCutout = dBox(cutoutPos - vec3(0.62 + 0.35,0, -0.35), vec3(0.5,1,0.35));
+
+        float round = 0.4;
+
+        // Letter S
+
+        float sCutout = sdRoundBox(cutoutPos - vec3(-0.2,0,0.5), vec3(0.44 - round, 1.0- round, 0.8-round), round);
+
+
+        round = 0.2;
+
+        vec3 s2Pos = cutoutPos- vec3( 0.21,0,0.56);
+
+
+        s2Pos.xz *= sCutRot;
+
+        float s2Cutout = sdRoundBox(s2Pos , vec3(0.51 - round, 1.1 - round, 0.18-round), round);
+        sCutout = max(-s2Cutout, sCutout);
+
+        s2Pos = cutoutPos- vec3( -0.6,0,0.36);
+        s2Pos.xz *= sCutRot;
+
+        float s3Cutout = sdRoundBox(s2Pos , vec3(0.51 - round, 1.1 - round, 0.18-round), round);
+        sCutout = max(-s3Cutout, sCutout);
+
+        float sSerif = dBox(cutoutPos - vec3(0.2,0, 1.02), vec3(0.05,1,0.24));
+        sCutout = min(sSerif, sCutout);
+
+        sSerif = dBox(cutoutPos - vec3(-0.66,0, 0.03), vec3(0.05,1,0.24));
+        sCutout = min(sSerif, sCutout);
+
+        // Zero
+
+
+        vec3 elongation = vec3(0,1,0.32);
+
+        vec3 zCutoutPos = cutoutPos- vec3(-0.47,0,-0.95);
+
+        vec3 q = zCutoutPos - clamp( zCutoutPos, -elongation, elongation );
+
+        float zeroCutout = sdTorus(q , vec2(0.155, 0.07));
+
+
+        // four
+
+        vec3 fourShBoxPos = p;
+        fourShBoxPos.yx *= fourShear;
+        float fourShBox = dBox(fourShBoxPos - vec3(.14,-0.8,0), vec3(0.1,0.38,1));
+
+
+        float fourHBox = dBox(p - vec3(.14,-1.08,0), vec3(0.28,0.1,1));
+
+        float fourVBox = dBox(p - vec3(.25,-1.15,0), vec3(0.1, 0.3,1));
+
+        gInnerCutout = max(flattenedSideCutout, gInnerCutout);
+        gInnerCutout = max(-gFlapCutout, gInnerCutout);
+        gInnerCutout = max(-sCutout, gInnerCutout);
+        gInnerCutout = max(-zeroCutout, gInnerCutout);
+        gInnerCutout = max(-fourShBox, gInnerCutout);
+        gInnerCutout = max(-fourHBox, gInnerCutout);
+        gInnerCutout = max(-fourVBox, gInnerCutout);
+
+        gCutout = max(-gGapCutout, gCutout);
+        gCutout = max(-gInnerCutout, gCutout);
+        cutout = max(-gCutout, cutout);
+
+        vec3 frontPlane = vec3(0,0,-1);
+        frontPlane.yz *= frontPlaneRot;
+
+        vec3 backPlane = vec3(0,0,1);
+        backPlane.yz *= backPlaneRot;
+
+        float front = dot(p + vec3(0,0,.25), frontPlane );
+        float back = dot(p - vec3(0,0,.25), backPlane)  ;
+
+        sphere = max(sphere, front);
+        sphere = max(sphere, back) - 0.2;
+        sphere = max(-cutout, sphere);
+
+    }
 
     //result = opUnion(result, pd, 4.0);
     result = opUnion(result, sphere, 1.0);
 
+
     vec3 shaftPos = p;
 
     shaftPos.yz *= rotate90;
-
     float zOffset = - u_time * 10.0;
 
-    vec3 noisePos = p - vec3(0,0, zOffset);
+    float shaft = -sdBeam( shaftPos, vec3(0,0,3) );
 
-    float n = snoise(noisePos);
-    float shaft = -sdBeam( shaftPos + shape(n,p.x) * 0.25 , vec3(0,0,3) ) * 0.6;
+    float mat = 7.0;
 
+    float d = length(vec3(p.x, p.y, 0.0));
+
+    if (abs(d) > 2.9)
+    {
+        vec3 noisePos = p - vec3(0,0, zOffset);
+        float n = snoise(noisePos);
+        shaft = -sdBeam( shaftPos + shape(n,p.x) * 0.25 , vec3(0,0,3) ) * 0.6;
+        mat = n < 0.4 ? 4.0 : 5.0;
+    }
 
     float bottom = dot(p + vec3(0,2.2,0), vec3(0,1,0) );
 
 
     result = opUnion(result, bottom, 3.0);
-    result = opUnion(result, shaft, n < 0.4 ? 4.0 : 5.0);
+    result = opUnion(result, shaft, mat);
 
 
     vec3 supportPos = p;
@@ -424,7 +435,7 @@ vec2 getDistance(vec3 p) {
 vec2 rayMarch(vec3 ro, vec3 rd) {
 
 
-    float dO=0.;
+    float dO = 0.;
     float id = 0.0;
 
     for (int i=0; i < MAX_STEPS; i++) {
@@ -489,7 +500,7 @@ void main(void)
     if (d < MAX_DIST) {
         vec3 p = ro + rd * d;
 
-        vec3 lightPos = ro + vec3(0, 3, 0);
+        vec3 lightPos = ro + vec3(0,2,0);
         vec3 lightDir = normalize(lightPos - p);
         vec3 norm = getNormal(p);
 
