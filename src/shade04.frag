@@ -1,5 +1,5 @@
 #version 300 es
-precision lowp float;
+precision mediump float;
 
 uniform float u_time;
 uniform vec2 u_resolution;
@@ -186,7 +186,7 @@ float sdRoundBox(vec3 p, vec3 b, float r)
 
 float sdBeam(vec3 p, vec3 c)
 {
-    return length(p.xz-c.xy)-c.z;
+    return length(p.xz - c.xy)-c.z;
 }
 
 float dBox(vec3 p, vec3 s) {
@@ -356,6 +356,17 @@ vec2 getDistance(vec3 p) {
         sphere = max(sphere, back) - 0.2;
         sphere = max(-cutout, sphere);
 
+        // DEBUG
+        //    result = opUnion(result, gFlapCutout, 2.1);
+        //    result = opUnion(result, gGapCutout, 1.9);
+        //    result = opUnion(result, sCutout, 2.2);
+        //    result = opUnion(result, zeroCutout, 2.3);
+        //    result = opUnion(result, fourShBox, 2.4);
+        //    result = opUnion(result, fourHBox, 2.5);
+        //    result = opUnion(result, fourVBox, 2.6);
+        //    result = opUnion(result, s2Cutout, 2.7);
+        //    result = opUnion(result, s3Cutout, 2.8);
+
     }
 
     //result = opUnion(result, pd, 4.0);
@@ -364,27 +375,30 @@ vec2 getDistance(vec3 p) {
 
     vec3 shaftPos = p;
 
+    shaftPos.x += (sin((p.z + u_time * 10.0) * 0.23) + sin((p.z + u_time * 10.0) * 0.27)) * 0.55;
+
     shaftPos.yz *= rotate90;
     float zOffset = - u_time * 10.0;
 
     float shaft = -sdBeam( shaftPos, vec3(0,0,3) );
 
-    float mat = 7.0;
+    float mat = 4.0;
 
     float d = length(vec3(p.x, p.y, 0.0));
 
-    if (abs(d) > 2.9)
+    if (abs(d) > 1.9)
     {
         vec3 noisePos = p - vec3(0,0, zOffset);
         float n = snoise(noisePos);
-        shaft = -sdBeam( shaftPos + shape(n,p.x) * 0.25 , vec3(0,0,3) ) * 0.6;
+        float off = shape(n,p.x) * 0.25;
+        shaft = -sdBeam( shaftPos + off , vec3(0,0,3) ) * 0.6;
         mat = n < 0.4 ? 4.0 : 5.0;
+
+        float bottom = dot(p + vec3(0,2.2,0) + off * 0.5, vec3(0,1,0) );
+
+        result = opUnion(result, bottom, 3.0);
     }
 
-    float bottom = dot(p + vec3(0,2.2,0), vec3(0,1,0) );
-
-
-    result = opUnion(result, bottom, 3.0);
     result = opUnion(result, shaft, mat);
 
 
@@ -399,34 +413,21 @@ vec2 getDistance(vec3 p) {
     supportPos.yz *= rotate90;
 
 
-    float support = sdHexPrism(supportPos, vec2(0.4, 10));
+    float support = sdHexPrism(supportPos, vec2(0.4, 2.5)) - 0.05;
 
-
-
-    float support2 = sdHexPrism(p - vec3(0,2.5,0), vec2(0.4, 20));
+    float support2 = sdHexPrism(p - vec3(0,2.5,0), vec2(0.4, 20)) - 0.05;
 
     vec3 support3Pos = p;
     support3Pos.z -= zOffset;
     support3Pos.z = mod(support3Pos.z+0.5*c,c)-0.5*c;
     support3Pos.xz *= rotate90;
 
-    float support3 = sdHexPrism(support3Pos - vec3(0,2.5,0), vec2(0.4, 20));
+    float support3 = sdHexPrism(support3Pos - vec3(0,2.5,0), vec2(0.4, 20)) - 0.05;
 
     result = opUnion(result, support, 6.0);
     result = opUnion(result, support2, 6.0);
     result = opUnion(result, support3, 6.0);
 
-
-// DEBUG
-//    result = opUnion(result, gFlapCutout, 2.1);
-//    result = opUnion(result, gGapCutout, 1.9);
-//    result = opUnion(result, sCutout, 2.2);
-//    result = opUnion(result, zeroCutout, 2.3);
-//    result = opUnion(result, fourShBox, 2.4);
-//    result = opUnion(result, fourHBox, 2.5);
-//    result = opUnion(result, fourVBox, 2.6);
-//    result = opUnion(result, s2Cutout, 2.7);
-//    result = opUnion(result, s3Cutout, 2.8);
 
     return result;
 }
@@ -473,6 +474,21 @@ vec3 getPaletteColor(float id)
 }
 
 
+vec3 applyFog( in vec3  rgb,      // original color of the pixel
+    in float distance, // camera to point distance
+    in vec3  rayOri,   // camera position
+    in vec3  rayDir,
+    in vec3 p)  // camera to point vector
+{
+    float pos = p.z + u_time * 12.0;
+
+    float c = 0.008;
+    float b = 0.9 + sin((pos + p.x * sin(pos * 0.27)) * 0.31 ) * 0.15 + sin(pos * 0.17 ) * 0.15;
+
+    float fogAmount = c * exp(-rayOri.y*b) * (1.0-exp( -distance*rayDir.y*b ))/rayDir.y;
+    vec3  fogColor  = #004d9d;
+    return mix( rgb, fogColor, fogAmount );
+}
 void main(void)
 {
     vec2 uv = (gl_FragCoord.xy-.5*u_resolution.xy)/u_resolution.y;
@@ -480,8 +496,8 @@ void main(void)
 
     vec3 col = vec3(0);
     vec3 ro = vec3(
-    (cos(u_time * 1.7) + cos(u_time)) * 0.8,
-    (sin(u_time * 1.3) - sin(u_time * 1.9)) * 0.8,
+    (cos(u_time * 1.7) + cos(u_time * 1.5)) * 0.7,
+    (sin(u_time * 2.1) - sin(u_time * 1.9)) * 0.5,
         -10.0 + sin(u_time) * 2.0
     );
 
@@ -497,37 +513,44 @@ void main(void)
 
     float d = result.x;
 
+    vec3 p = ro + rd * d;
     if (d < MAX_DIST) {
-        vec3 p = ro + rd * d;
 
-        vec3 lightPos = ro + vec3(0,2,0);
+        vec3 lightPos = ro + vec3(0,1,0);
         vec3 lightDir = normalize(lightPos - p);
         vec3 norm = getNormal(p);
 
-        vec3 lightColor = vec3(40.0);
+        vec3 lightColor = vec3(2.8);
 
         float id = result.y;
 
         // ambient
-        vec3 ambient = lightColor * vec3(0.01,0.005,0);
+        vec3 ambient = lightColor * vec3(0.001);
 
         // diffuse
         float diff = max(dot(norm, lightDir), 0.0);
         vec3 tone = getPaletteColor(id);
+
+        if (id == 4.0)
+        {
+            tone *= snoise(p + vec3(0,0, u_time * 10.0)) * 0.5;
+        }
+
         vec3 diffuse = lightColor * (diff * tone);
 
         // specular
         vec3 viewDir = normalize(ro);
         vec3 reflectDir = reflect(-lightDir, norm);
         float spec = pow(max(dot(viewDir, reflectDir), 0.0), u_shiny[int(id)]);
-        vec3 specular = lightColor * spec * vec3(0.7843,0.8823,0.9451);
+        vec3 specular = lightColor * spec * vec3(0.7843,0.8823,0.9451) * 0.1;
 
-        col = clamp((ambient + diffuse + specular)/ max(1.0,d*d), 0.0, 1.0);
+        col = (ambient + diffuse + specular);
 
-//        col =  dsQ * 0.2 + tone * dif * dsQ * 50.0;
     }
+    col = applyFog(col, d, ro, rd, p);
 
-    col = pow(col, vec3(1.0/2.2));
+
+    //col = pow(col, vec3(1.0/2.2));
 
     outColor = vec4(
         col,

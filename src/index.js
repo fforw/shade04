@@ -20,6 +20,11 @@ const config = {
 let canvas, gl, vao, program;
 
 
+const CAPTURE = 0;
+const CAPTURE_FRAMES = 60 * 25;
+
+const capturer = CAPTURE ?  new CCapture( { format: 'png' } ) : null;
+
 // uniform: current time
 let u_time;
 
@@ -33,13 +38,15 @@ let u_shiny;
 
 let mouseX = 0, mouseY = 0, mouseDown, startX, startY;
 
+let captureFrameCount = 0;
+
 // Get the container element's bounding box
 let canvasBounds;
 
 function resize()
 {
     const width = (window.innerWidth) & ~15;
-    const height = (window.innerHeight) | 0;
+    const height = (window.innerHeight)  | 0;
 
     config.width = width;
     config.height = height;
@@ -47,18 +54,11 @@ function resize()
     canvas.width = width;
     canvas.height = height;
 
-    mouseX = width/2;
+    mouseX = width/2;   
     mouseY = height/2;
 
     gl.viewport(0, 0, canvas.width, canvas.height);
 }
-
-window.onload = () => {
-
-    requestAnimationFrame(main);
-};
-
-
 
 function createShader(gl, type, source) {
     const shader = gl.createShader(type);
@@ -95,9 +95,17 @@ function printError(msg)
     document.getElementById("out").innerHTML = "<p>" + msg + "</p>";
 }
 
+
 function main(time)
 {
-    const start = perfNow();
+    if (capturer && captureFrameCount++ > CAPTURE_FRAMES)
+    {
+        capturer.stop();
+        capturer.save();
+        return;
+    }
+
+    //const start = perfNow();
     const f = mouseDown ? 1 : -1;
 
     // update uniforms
@@ -110,10 +118,16 @@ function main(time)
     // draw
     const primitiveType = gl.TRIANGLES;
     const offset = 0;
-    const count = 6;
+    let count = 6;
     gl.drawArrays(primitiveType, offset, count);
 
     requestAnimationFrame(main);
+
+    if (capturer)
+    {
+        capturer.capture(canvas);
+    }
+
 }
 
 
@@ -201,15 +215,18 @@ window.onload = () => {
             "#000",
             "#fff",
             "#c02",
-            "#00244f",
-            "#004d9d",
+            "#1b1d26",
+            "#16181d",
             "#010101",
-            "#4c3a25",
+            "#18120c",
             "#f0f"
         ],
-        1
+        1/5
     );
 
+    // paletteArray[3] *= 10;
+    // paletteArray[4] *= 10;
+    // paletteArray[5] *= 10;
 
     gl.uniform3fv(u_palette, paletteArray);
     gl.uniform1fv(u_shiny, new Float32Array([
@@ -224,6 +241,11 @@ window.onload = () => {
     ]));
 
     requestAnimationFrame(main)
+
+    if (capturer)
+    {
+        capturer.start();
+    }
 }
 
 
