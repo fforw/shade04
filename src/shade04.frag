@@ -260,8 +260,7 @@ vec2 getDistance(vec3 p) {
     vec2 result = vec2(1e6, 0);
     float sphere = sdSphere( p , 1.8 );
 
-    float d2 = length(p);
-    if (d2 < 2.0)
+    if (sphere < 0.2)
     {
         vec3 cutoutPos = p;
 
