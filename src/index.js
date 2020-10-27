@@ -236,7 +236,7 @@ window.onload = () => {
     gl.uniform3fv(u_palette, paletteArray);
     gl.uniform1fv(u_shiny, new Float32Array([
         2,
-        1000,
+        30,
         2,
         2,
         2,

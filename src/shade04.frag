@@ -198,14 +198,30 @@ float dBox(vec3 p, vec3 s) {
 
 vec2 opUnion(vec2 curr, float d, float id)
 {
-    if (d < curr.x)
-    {
-        curr.x = d;
-        curr.y = id;
-    }
+//    if (d < curr.x)
+//    {
+//        curr.x = d;
+//        curr.y = id;
+//    }
+//
+//    return curr;
 
-    return curr;
+    float s = step(curr.x, d);
+    return s * curr + (1.0 - s) * vec2(d, id);
 }
+
+
+// Minimum - with corresponding object ID.
+vec2 objMin(vec2 a, vec2 b){
+
+    // Returning the minimum distance along with the ID of the
+    // object. This is one way to do it. There are others.
+
+    // Equivalent to: return a.x < b.x ? a: b;
+    float s = step(a.x, b.x);
+    return s*a + (1. - s)*b;
+}
+
 
 vec2 softMinUnion(vec2 curr, float d, float id)
 {
@@ -502,7 +518,7 @@ vec3 applyFog( in vec3  rgb,      // original color of the pixel
     float pos = p.z + u_time * 12.0;
 
     float c = 0.008;
-    float b = 0.9 + sin((pos + p.x * sin(pos * 0.27)) * 0.31 ) * 0.15 + sin(pos * 0.17 ) * 0.15;
+    float b = 0.95 + sin((pos + p.x * sin(pos * 0.27)) * 0.31 ) * 0.15 + sin(pos * 0.17 ) * 0.15;
 
     float fogAmount = c * exp(-rayOri.y*b) * (1.0-exp( -distance*rayDir.y*b ))/rayDir.y;
     vec3  fogColor  = #004d9d;
@@ -561,7 +577,7 @@ void main(void)
         vec3 viewDir = normalize(ro);
         vec3 reflectDir = reflect(-lightDir, norm);
         float spec = pow(max(dot(viewDir, reflectDir), 0.0), u_shiny[int(id)]);
-        vec3 specular = lightColor * spec * vec3(0.7843,0.8823,0.9451) * 0.1;
+        vec3 specular = lightColor * spec * vec3(0.7843,0.8823,0.9451) * (id == 1.0 ? 0.24 : 0.1);
 
         col = (ambient + diffuse + specular);
 
