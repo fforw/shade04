@@ -22,6 +22,8 @@ out vec4 outColor;
 #define ROT(a) mat2(cos(a), -sin(a), sin(a), cos(a))
 #define SHEARX(a) mat2(1, 0, sin(a), 1)
 
+float rand(float n){return fract(sin(n) * 43758.5453123);}
+
 ////////////////////// NOISE
 
 //	Simplex 3D Noise
@@ -384,6 +386,7 @@ vec2 getDistance(vec3 p) {
     float mat = 4.0;
 
     float d = length(vec3(p.x, p.y, 0.0));
+    vec3 sideShaftPos = p;
 
     if (abs(d) > 1.9)
     {
@@ -393,10 +396,23 @@ vec2 getDistance(vec3 p) {
         shaft = -sdBeam( shaftPos + off , vec3(0,0,3) ) * 0.6;
         mat = n < 0.4 ? 4.0 : 5.0;
 
+        sideShaftPos += off * 0.9;
+
         float bottom = dot(p + vec3(0,2.2,0) + off * 0.5, vec3(0,1,0) );
 
         result = opUnion(result, bottom, 3.0);
     }
+
+
+    sideShaftPos.z += u_time * 10.0;
+
+
+    sideShaftPos.x += floor(rand(floor(sideShaftPos.z/60.0)) * 4.0) * 10.0 - 10.0;
+    sideShaftPos.z = mod(sideShaftPos.z - 10. + 0.5 * 60.0, 60.0)- 30.0;
+
+    float sideShaft = -dBox( sideShaftPos, vec3(10,3,3) );
+
+    shaft = max(shaft, sideShaft);
 
     result = opUnion(result, shaft, mat);
 
