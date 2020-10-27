@@ -414,7 +414,11 @@ vec2 getDistance(vec3 p) {
 
     float support = sdHexPrism(supportPos, vec2(0.4, 2.5)) - 0.05;
 
-    float support2 = sdHexPrism(p - vec3(0,2.5,0), vec2(0.4, 20)) - 0.05;
+    vec3 support2Pos = p;
+
+    support2Pos.z = mod(supportPos.z+0.5*c,c)-0.5*c;
+
+    float support2 = sdHexPrism(support2Pos - vec3(0,2.5,0), vec2(0.4, 20)) - 0.05;
 
     vec3 support3Pos = p;
     support3Pos.z -= zOffset;
