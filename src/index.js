@@ -17,13 +17,13 @@ const config = {
     height: 0
 };
 
-let canvas, gl, vao, program;
+let canvas, gl, vao, program, github;
 
 
 const CAPTURE = 0;
-const CAPTURE_FRAMES = 60 * 25;
+const CAPTURE_FRAMES = 60 * 20;
 
-const capturer = CAPTURE ?  new CCapture( { format: 'png' } ) : null;
+const capturer = CAPTURE ?  new CCapture( { format: 'webm', frameRate: 60, name: "schalke04-shader", quality: 85 } ) : null;
 
 // uniform: current time
 let u_time;
@@ -98,11 +98,16 @@ function printError(msg)
 
 function main(time)
 {
-    if (capturer && captureFrameCount++ > CAPTURE_FRAMES)
+    if (capturer)
     {
-        capturer.stop();
-        capturer.save();
-        return;
+        github.innerHTML = captureFrameCount + "/" + CAPTURE_FRAMES;
+
+        if (captureFrameCount++ > CAPTURE_FRAMES)
+        {
+            capturer.stop();
+            capturer.save();
+            return;
+        }
     }
 
     //const start = perfNow();
@@ -241,6 +246,8 @@ window.onload = () => {
     ]));
 
     requestAnimationFrame(main)
+
+    github = document.querySelector(".github");
 
     if (capturer)
     {

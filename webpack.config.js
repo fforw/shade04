@@ -64,14 +64,14 @@ module.exports = {
             "process.env.NODE_ENV": JSON.stringify(PRODUCTION ? "production" : "development")
         }),
 
-        // new CopyPlugin({
-        //         patterns: [
-        //             {
-        //                 from: "media/**/*"
-        //             }
-        //         ]
-        //     }
-        // ),
+        new CopyPlugin({
+                patterns: [
+                    {
+                        from: "ccapture/**/*"
+                    }
+                ]
+            }
+        ),
 
         new CleanObsoleteChunks()
     ],
